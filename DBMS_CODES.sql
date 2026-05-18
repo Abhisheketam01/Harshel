@@ -210,8 +210,8 @@ WHERE EXISTS (SELECT 1 FROM `Order` o WHERE o.customer_id = c.customer_id);
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-- ============================================================
---  PROBLEM 6.2 — Subqueries
+-- ============================================================
+--  PROBLEM 5.1 — JOINs
 -- ============================================================
 
 CREATE TABLE Customer (
@@ -235,7 +235,6 @@ CREATE TABLE `Order` (
     FOREIGN KEY (Product_id)  REFERENCES Product(Product_id)
 );
 
--- i. Insert 5 records
 INSERT INTO Customer VALUES
 (1,'Rahul Verma','Pune'),(2,'Sneha Kulkarni','Mumbai'),
 (3,'Amit Shah','Delhi'),(4,'Priya Nair','Bangalore'),
@@ -243,37 +242,34 @@ INSERT INTO Customer VALUES
 
 INSERT INTO Product VALUES
 (10,'Laptop',55000),(11,'Mouse',450),(12,'Keyboard',1200),
-(13,'Monitor',14000),(14,'Headphones',2500);
+(13,'Monitor',14000),(14,'Headphones',2500),(15,'Webcam',1800);
 
--- customer_id 5 has no order (used in NOT IN query)
+-- customer_id 5 has no order; Product_id 15 has no order (for LEFT/RIGHT JOIN demo)
 INSERT INTO `Order` VALUES
 (1001,1,10,1),(1002,2,11,2),(1003,3,12,3),
-(1004,4,13,2),(1005,1,14,3);
+(1004,4,13,1),(1005,1,14,2);
 
--- ii. Customers who HAVE placed orders
-SELECT customer_id, customer_name FROM Customer
-WHERE customer_id IN (SELECT DISTINCT customer_id FROM `Order`);
+-- i. INNER JOIN
+SELECT c.customer_name, p.Product_name, o.quantity
+FROM `Order` o
+INNER JOIN Customer c ON o.customer_id = c.customer_id
+INNER JOIN Product  p ON o.Product_id  = p.Product_id;
 
--- iii. Customers who have NOT placed any order
-SELECT customer_id, customer_name FROM Customer
-WHERE customer_id NOT IN (SELECT DISTINCT customer_id FROM `Order`);
+-- ii. LEFT JOIN (all customers including those with no orders)
+SELECT c.customer_id, c.customer_name, o.Order_id, o.quantity
+FROM Customer c
+LEFT JOIN `Order` o ON c.customer_id = o.customer_id;
 
--- iv. Customers with total purchase > 30,000
-SELECT c.customer_id, c.customer_name FROM Customer c
-WHERE c.customer_id IN (
-    SELECT o.customer_id FROM `Order` o
-    JOIN Product p ON o.Product_id = p.Product_id
-    GROUP BY o.customer_id
-    HAVING SUM(p.Price * o.quantity) > 30000
-);
+-- iii. RIGHT JOIN (all products including unordered ones)
+SELECT p.Product_id, p.Product_name, o.Order_id, o.quantity
+FROM `Order` o
+RIGHT JOIN Product p ON o.Product_id = p.Product_id;
 
--- v. Products more expensive than average price
-SELECT Product_id, Product_name, Price FROM Product
-WHERE Price > (SELECT AVG(Price) FROM Product);
-
--- vi. Customers who ordered at least one product (EXISTS)
-SELECT customer_id, customer_name FROM Customer c
-WHERE EXISTS (SELECT 1 FROM `Order` o WHERE o.customer_id = c.customer_id);
+-- iv. CROSS JOIN (all customer-product combinations)
+SELECT c.customer_name, p.Product_name
+FROM Customer c
+CROSS JOIN Product p
+ORDER BY c.customer_name, p.Product_name;
 
 
 //////////////////////////////////// GHE BHAIII ZAL TUZ KAAAAM 25 /////////////////////////////////////////////////////////////////S
